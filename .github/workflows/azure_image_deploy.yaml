@@ -1,0 +1,43 @@
+name: CI Pipeline QA
+ 
+on:
+  workflow_dispatch:  # Enables manual trigger from the GitHub Actions UI
+    inputs:
+      branch:
+        description: "Branch name to use for building and pushing the image"
+        required: true
+        default: "dev"  # Default branch name
+ 
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+ 
+    steps:
+      # Checkout the repository code from the specified branch
+      - name: Checkout Code
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.inputs.branch }}  # Use the branch input
+ 
+      # Set up Docker to use the GitHub Actions runner
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+ 
+      # Log in to Azure Container Registry
+      - name: Log in to Azure Container Registry
+        uses: azure/docker-login@v1
+        with:
+          login-server: registryfgwr.azurecr.io
+          username: ${{ secrets.ACR_USERNAME }}
+          password: ${{ secrets.ACR_PASSWORD }}
+ 
+
+      # Build the Docker image
+      - name: Build Docker Image
+        run: |
+          docker build -t registryfgwr.azurecr.io/c5i_fgwr_fe:latest .
+
+      # Push the Docker image to ACR
+      - name: Push Docker Image to ACR
+        run: |
+          docker push registryfgwr.azurecr.io/c5i_fgwr_fe:latest
