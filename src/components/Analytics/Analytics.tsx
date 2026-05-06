@@ -24,7 +24,7 @@ const Analytics: React.FC = () => {
     <div className="w-full h-screen overflow-hidden">
       <iframe
         title="PowerBI Report"
-        src="https://app.powerbi.com/view?r=eyJrIjoiYThhZjFjNDktNmQxNi00YTA0LWJhZTktOTY5ODQwODA4MzdhIiwidCI6ImI1YWYyNDUxLWUyMWItNGFhMi1iNGI1LWRjNTkwNzkwOGRkOCJ9"
+        src="https://app.powerbi.com/view?r=eyJrIjoiYTgwZDRkNWYtMmE2OC00MDI2LTg5YjItNDhmODE3ZWZjMjcwIiwidCI6ImI1YWYyNDUxLWUyMWItNGFhMi1iNGI1LWRjNTkwNzkwOGRkOCJ9&pageName=33dd7ddcc0277832cc45"
         style={{ border: "none" }}
         className="w-full h-full"
         allowFullScreen

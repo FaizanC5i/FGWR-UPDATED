@@ -1,10 +1,15 @@
 import React, { useState } from "react";
 import {ChevronDown, Send, X } from "lucide-react";
-import { askGenie } from "../../services/GenieAPI";
+import { askGenie, type GenieResponse } from "../../services/GenieAPI";
 import aichat from "../../assets/aichat.gif";
 
 interface Message {
-  text: string;
+  text?: string;
+  table?: {
+    columns: string[];
+    rows: string[][];
+  };
+  type: "text" | "table";
   sender: "user" | "ai";
 }
 
@@ -66,14 +71,25 @@ const AIAssistant: React.FC<AIAssistantProps> = ({
 
     if (showQuickStart) setShowQuickStart(false);
 
-    setMessages((prev) => [...prev, { text: currentPrompt, sender: "user" }]);
+    setMessages((prev) => [
+      ...prev,
+      { text: currentPrompt, type: "text", sender: "user" },
+    ]);
     setPrompt("");
     setIsLoading(true);
     setError(null);
 
     try {
-      const response = await askGenie(currentPrompt);
-      setMessages((prev) => [...prev, { text: response, sender: "ai" }]);
+      const response: GenieResponse = await askGenie(currentPrompt);
+      setMessages((prev) => [
+        ...prev,
+        {
+          sender: "ai",
+          type: response.type,
+          text: response.type === "text" ? response.text : response.text,
+          table: response.type === "table" ? response.table : undefined,
+        },
+      ]);
     } catch (err) {
       setError("Sorry, something went wrong. Please try again.");
       console.error(err);
@@ -167,13 +183,43 @@ const AIAssistant: React.FC<AIAssistantProps> = ({
               {messages.map((msg, index) => (
                 <div
                   key={index}
-                  className={`p-2 rounded-lg max-w-[85%] ${
+                  className={`p-2 rounded-lg max-w-[85%] whitespace-pre-wrap break-words ${
                     msg.sender === "user"
                       ? "bg-blue-500 text-white self-end ml-auto"
                       : "bg-gray-200 text-gray-800 self-start"
                   }`}
                 >
-                  {msg.text}
+                  {msg.type === "table" && msg.table ? (
+                    <div className="space-y-2">
+                      {msg.text && <p>{msg.text}</p>}
+                      <div className="overflow-x-auto">
+                        <table className="text-xs min-w-full border border-gray-300 bg-white text-gray-800">
+                          <thead className="bg-gray-100">
+                            <tr>
+                              {msg.table.columns.map((column) => (
+                                <th key={column} className="px-2 py-1 border border-gray-300 text-left font-semibold">
+                                  {column}
+                                </th>
+                              ))}
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {msg.table.rows.map((row, rowIndex) => (
+                              <tr key={rowIndex}>
+                                {row.map((cell, cellIndex) => (
+                                  <td key={`${rowIndex}-${cellIndex}`} className="px-2 py-1 border border-gray-300">
+                                    {cell}
+                                  </td>
+                                ))}
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    </div>
+                  ) : (
+                    <div>{msg.text}</div>
+                  )}
                 </div>
               ))}
               {isLoading && (
@@ -196,8 +242,9 @@ const AIAssistant: React.FC<AIAssistantProps> = ({
                 </p>
                 <ul className="space-y-2 text-sm mb-3">
                   {[
-                    "Show me the total number of tables",
-                    "Provide a summary of the week_dim table",
+                    "Which location has the highest total damage?",
+                    "What is the total sum of all damages recorded?",
+                    "Show me top 5 damage locations",
                   ].map((q, i) => (
                     <li
                       key={i}

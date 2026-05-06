@@ -9,10 +9,15 @@ import {
   X,
 } from "lucide-react";
 import { useState, useEffect } from "react";
-import { askGenie } from "../../services/GenieAPI";
+import { askGenie, type GenieResponse } from "../../services/GenieAPI";
 
 interface Message {
-  text: string;
+  text?: string;
+  table?: {
+    columns: string[];
+    rows: string[][];
+  };
+  type: "text" | "table";
   sender: "user" | "ai";
 }
 
@@ -112,15 +117,26 @@ const DashboardPage: React.FC = () => {
     if (showQuickStart) setShowQuickStart(false);
 
     // Add user's message to the chat
-    setMessages((prev) => [...prev, { text: currentPrompt, sender: "user" }]);
+    setMessages((prev) => [
+      ...prev,
+      { text: currentPrompt, type: "text", sender: "user" },
+    ]);
     setPrompt(""); // Clear input field
     setIsLoading(true);
     setError(null);
 
     try {
-      const response = await askGenie(currentPrompt);
+      const response: GenieResponse = await askGenie(currentPrompt);
       // Add AI's response to the chat
-      setMessages((prev) => [...prev, { text: response, sender: "ai" }]);
+      setMessages((prev) => [
+        ...prev,
+        {
+          sender: "ai",
+          type: response.type,
+          text: response.type === "text" ? response.text : response.text,
+          table: response.type === "table" ? response.table : undefined,
+        },
+      ]);
     } catch (err) {
       setError("Sorry, something went wrong. Please try again.");
       console.error(err);
@@ -400,13 +416,14 @@ const DashboardPage: React.FC = () => {
             {/* Power BI iframe */}
             <div className="relative border rounded-lg h-[160px] overflow-hidden overflow-y-auto">
               <iframe
-                title="chocolate_sales_final"
-                width="100%"
-                height="100%"
-                src="https://app.powerbi.com/view?r=eyJrIjoiYThhZjFjNDktNmQxNi00YTA0LWJhZTktOTY5ODQwODA4MzdhIiwidCI6ImI1YWYyNDUxLWUyMWItNGFhMi1iNGI1LWRjNTkwNzkwOGRkOCJ9"
-                frameBorder="0"
-                allowFullScreen={true}
+                title="Pearl Dashboard"
+                width="600"
+                height="373.5"
+                src="https://app.powerbi.com/view?r=eyJrIjoiYTgwZDRkNWYtMmE2OC00MDI2LTg5YjItNDhmODE3ZWZjMjcwIiwidCI6ImI1YWYyNDUxLWUyMWItNGFhMi1iNGI1LWRjNTkwNzkwOGRkOCJ9&pageName=697bf24d30dc5e4ae66d"
+                
+                allowFullScreen
               />
+
             </div>
           </div>
         </div>
@@ -471,13 +488,43 @@ const DashboardPage: React.FC = () => {
                 {messages.map((msg, index) => (
                   <div
                     key={index}
-                    className={`p-2 rounded-lg max-w-[85%] ${
+                    className={`p-2 rounded-lg max-w-[85%] whitespace-pre-wrap break-words ${
                       msg.sender === "user"
                         ? "bg-blue-500 text-white self-end ml-auto"
                         : "bg-gray-200 text-gray-800 self-start"
                     }`}
                   >
-                    {msg.text}
+                    {msg.type === "table" && msg.table ? (
+                      <div className="space-y-2">
+                        {msg.text && <p>{msg.text}</p>}
+                        <div className="overflow-x-auto">
+                          <table className="text-xs min-w-full border border-gray-300 bg-white text-gray-800">
+                            <thead className="bg-gray-100">
+                              <tr>
+                                {msg.table.columns.map((column) => (
+                                  <th key={column} className="px-2 py-1 border border-gray-300 text-left font-semibold">
+                                    {column}
+                                  </th>
+                                ))}
+                              </tr>
+                            </thead>
+                            <tbody>
+                              {msg.table.rows.map((row, rowIndex) => (
+                                <tr key={rowIndex}>
+                                  {row.map((cell, cellIndex) => (
+                                    <td key={`${rowIndex}-${cellIndex}`} className="px-2 py-1 border border-gray-300">
+                                      {cell}
+                                    </td>
+                                  ))}
+                                </tr>
+                              ))}
+                            </tbody>
+                          </table>
+                        </div>
+                      </div>
+                    ) : (
+                      <div>{msg.text}</div>
+                    )}
                   </div>
                 ))}
                 {isLoading && (
@@ -500,8 +547,9 @@ const DashboardPage: React.FC = () => {
                   </p>
                   <ul className="space-y-2 text-sm mb-3">
                     {[
-                      "Show me the total number of tables",
-                      "Provide a summary of the week_dim table",
+                      "Which location has the highest total damage?",
+                      "What is the total sum of all damages recorded?",
+                      "Show me top 5 damage locations",
                     ].map((q, i) => (
                       <li
                         key={i}

@@ -5,9 +5,16 @@ import { useEffect } from 'react';
 interface SuccessMessageProps {
   visible: boolean;
   onComplete: () => void;
+  title?: string;
+  description?: string;
 }
 
-export function SuccessMessage({ visible, onComplete }: SuccessMessageProps) {
+export function SuccessMessage({
+  visible,
+  onComplete,
+  title = 'Automation Saved!',
+  description = 'Your scheduled summary settings have been updated successfully.',
+}: SuccessMessageProps) {
   useEffect(() => {
     if (visible) {
       const timer = setTimeout(() => {
@@ -58,7 +65,7 @@ export function SuccessMessage({ visible, onComplete }: SuccessMessageProps) {
           transition={{ delay: 0.3 }}
           className="text-xl font-semibold text-slate-900 mb-2"
         >
-          Automation Saved!
+          {title}
         </motion.h3>
 
         <motion.p
@@ -67,7 +74,7 @@ export function SuccessMessage({ visible, onComplete }: SuccessMessageProps) {
           transition={{ delay: 0.4 }}
           className="text-sm text-slate-600 text-center"
         >
-          Your scheduled summary settings have been updated successfully.
+          {description}
         </motion.p>
 
         {/* Confetti effect */}

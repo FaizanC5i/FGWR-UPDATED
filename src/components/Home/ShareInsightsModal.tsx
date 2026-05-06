@@ -1,5 +1,7 @@
+import { useState } from 'react';
 import * as Dialog from '@radix-ui/react-dialog';
 import { X, Plus, FileText, ExternalLink } from 'lucide-react';
+import { SuccessMessage } from './SuccessMessage';
 
 interface ShareInsightsModalProps {
   open: boolean;
@@ -7,11 +9,23 @@ interface ShareInsightsModalProps {
 }
 
 export function ShareInsightsModal({ open, onOpenChange }: ShareInsightsModalProps) {
+  const [showSentSuccess, setShowSentSuccess] = useState(false);
+
+  const handleSendBriefing = () => {
+    setShowSentSuccess(true);
+  };
+
+  const handleSuccessComplete = () => {
+    setShowSentSuccess(false);
+    onOpenChange(false);
+  };
+
   return (
-    <Dialog.Root open={open} onOpenChange={onOpenChange}>
-      <Dialog.Portal>
-        <Dialog.Overlay className="fixed inset-0 bg-black/50 z-50" />
-        <Dialog.Content className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-white rounded-xl shadow-xl w-[700px] max-h-[85vh] overflow-y-auto z-50">
+    <>
+      <Dialog.Root open={open} onOpenChange={onOpenChange}>
+        <Dialog.Portal>
+          <Dialog.Overlay className="fixed inset-0 bg-black/50 z-50" />
+          <Dialog.Content className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-white rounded-xl shadow-xl w-[700px] max-h-[85vh] overflow-y-auto z-50">
           <div className="sticky top-0 bg-white border-b border-slate-200 px-6 py-4 flex items-center justify-between">
             <div>
               <Dialog.Title className="text-lg font-semibold text-slate-900">
@@ -99,20 +113,28 @@ export function ShareInsightsModal({ open, onOpenChange }: ShareInsightsModalPro
             </div>
           </div>
 
-          <div className="sticky bottom-0 bg-slate-50 border-t border-slate-200 px-6 py-4 flex gap-3">
-            <button
-              onClick={() => onOpenChange(false)}
-              className="flex-1 px-6 py-2.5 bg-[#1565C0] text-white rounded-lg hover:bg-[#1976D2] font-medium transition-colors"
-            >
-              Send Briefing
-            </button>
-            <button className="px-4 py-2.5 text-[#1565C0] hover:text-[#1976D2] font-medium flex items-center gap-1">
-              Edit in full email client
-              <ExternalLink className="w-4 h-4" />
-            </button>
-          </div>
-        </Dialog.Content>
-      </Dialog.Portal>
-    </Dialog.Root>
+            <div className="sticky bottom-0 bg-slate-50 border-t border-slate-200 px-6 py-4 flex gap-3">
+              <button
+                onClick={handleSendBriefing}
+                className="flex-1 px-6 py-2.5 bg-[#1565C0] text-white rounded-lg hover:bg-[#1976D2] font-medium transition-colors"
+              >
+                Send Briefing
+              </button>
+              <button className="px-4 py-2.5 text-[#1565C0] hover:text-[#1976D2] font-medium flex items-center gap-1">
+                Edit in full email client
+                <ExternalLink className="w-4 h-4" />
+              </button>
+            </div>
+          </Dialog.Content>
+        </Dialog.Portal>
+      </Dialog.Root>
+
+      <SuccessMessage
+        visible={showSentSuccess}
+        onComplete={handleSuccessComplete}
+        title="Brief Sent!"
+        description="Your briefing has been shared successfully."
+      />
+    </>
   );
 }

@@ -1,6 +1,7 @@
 import * as Dialog from '@radix-ui/react-dialog';
 import { X, Plus } from 'lucide-react';
 import { useState } from 'react';
+import { SuccessMessage } from './SuccessMessage';
 
 interface QuickAlertModalProps {
   open: boolean;
@@ -19,8 +20,28 @@ interface QuickAlertModalProps {
 
 export function QuickAlertModal({ open, onOpenChange, anomaly }: QuickAlertModalProps) {
   const [phoneNumber, setPhoneNumber] = useState('');
+  const [showSuccess, setShowSuccess] = useState(false);
+  const [successTitle, setSuccessTitle] = useState('');
+  const [successDescription, setSuccessDescription] = useState('');
 
   if (!anomaly) return null;
+
+  const handleSendEmailAlert = () => {
+    setSuccessTitle('Email Alert Sent');
+    setSuccessDescription('Your email alert has been sent successfully.');
+    setShowSuccess(true);
+  };
+
+  const handleSendSmsAlert = () => {
+    setSuccessTitle('SMS Alert Sent');
+    setSuccessDescription('Your SMS alert has been sent successfully.');
+    setShowSuccess(true);
+  };
+
+  const handleSuccessComplete = () => {
+    setShowSuccess(false);
+    onOpenChange(false);
+  };
 
   const severityColors = {
     critical: 'bg-red-500',
@@ -34,10 +55,11 @@ export function QuickAlertModal({ open, onOpenChange, anomaly }: QuickAlertModal
   const smsCharCount = smsMessage.length;
 
   return (
-    <Dialog.Root open={open} onOpenChange={onOpenChange}>
-      <Dialog.Portal>
-        <Dialog.Overlay className="fixed inset-0 bg-black/40 z-50" />
-        <Dialog.Content className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-white rounded-xl shadow-2xl w-[480px] max-h-[85vh] overflow-y-auto z-50">
+    <>
+      <Dialog.Root open={open} onOpenChange={onOpenChange}>
+        <Dialog.Portal>
+          <Dialog.Overlay className="fixed inset-0 bg-black/40 z-50" />
+          <Dialog.Content className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-white rounded-xl shadow-2xl w-[480px] max-h-[85vh] overflow-y-auto z-50">
           <div className="p-6">
             {/* Header */}
             <div className="flex items-center justify-between mb-2">
@@ -91,7 +113,10 @@ export function QuickAlertModal({ open, onOpenChange, anomaly }: QuickAlertModal
                 />
               </div>
 
-              <button className="w-full px-4 py-2.5 bg-blue-600 text-white rounded-full hover:bg-blue-700 font-medium text-sm transition-colors">
+              <button
+                onClick={handleSendEmailAlert}
+                className="w-full px-4 py-2.5 bg-blue-600 text-white rounded-full hover:bg-blue-700 font-medium text-sm transition-colors"
+              >
                 Send Email Alert
               </button>
             </div>
@@ -141,7 +166,10 @@ export function QuickAlertModal({ open, onOpenChange, anomaly }: QuickAlertModal
                 </div>
               </div>
 
-              <button className="w-full px-4 py-2.5 border-2 border-blue-600 text-blue-600 rounded-full hover:bg-blue-50 font-medium text-sm transition-colors">
+              <button
+                onClick={handleSendSmsAlert}
+                className="w-full px-4 py-2.5 border-2 border-blue-600 text-blue-600 rounded-full hover:bg-blue-50 font-medium text-sm transition-colors"
+              >
                 Send SMS Alert
               </button>
             </div>
@@ -156,8 +184,16 @@ export function QuickAlertModal({ open, onOpenChange, anomaly }: QuickAlertModal
               </button>
             </div>
           </div>
-        </Dialog.Content>
-      </Dialog.Portal>
-    </Dialog.Root>
+          </Dialog.Content>
+        </Dialog.Portal>
+      </Dialog.Root>
+
+      <SuccessMessage
+        visible={showSuccess}
+        onComplete={handleSuccessComplete}
+        title={successTitle}
+        description={successDescription}
+      />
+    </>
   );
 }
