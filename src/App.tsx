@@ -9,6 +9,7 @@ import Sidebar from './components/Sidebar/Sidebar';
 import Analytics from './components/Analytics/Analytics';
 import Stales from './components/stales/stales';
 import Damages from './components/Damages/Damages';
+import ReportsPage from './components/Reports/ReportsPage';
 
 function App() {
 
@@ -35,6 +36,7 @@ function App() {
           <Route path='/analytics' element={<Analytics />} />
           <Route path='/stales' element={<Stales />} />
           <Route path='/damages' element={<Damages />} />
+          <Route path='/reports' element={<ReportsPage />} />
         </Route>
       </Routes>
     </Suspense>
