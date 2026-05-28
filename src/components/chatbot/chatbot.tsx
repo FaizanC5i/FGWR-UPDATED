@@ -1,5 +1,5 @@
-import React, { useRef, useState } from "react";
-import { ChevronDown, Send, X } from "lucide-react";
+import React, { useRef, useState, useEffect } from "react";
+import { ChevronDown, Send, X, Square, Minimize2 } from "lucide-react";
 import { toPng } from "html-to-image";
 import {
   Bar,
@@ -255,6 +255,83 @@ const AIAssistant: React.FC<AIAssistantProps> = ({
   const [prompt, setPrompt] = useState("");
   const [messages, setMessages] = useState<Message[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [isMaximized, setIsMaximized] = useState(false);
+  const [maxStyle, setMaxStyle] = useState<React.CSSProperties | undefined>(
+    undefined
+  );
+  const normalQuickQuestions = [
+  "Which location has the highest total damage?",
+  "What is the total sum of all damages recorded?",
+  "Show me top 5 damage locations",
+];
+
+const reportQuickQuestions = [
+  "Give me a detailed report on Total damages in latest quarter",
+  "Fetch me report on damages in recent 30 days",
+  "Make a detailed report on sales and damages YoY change",
+];
+
+  useEffect(() => {
+    if (!isMaximized) return;
+
+    const recompute = () => {
+      const main = document.querySelector("main");
+      const header = document.querySelector("header");
+      if (main) {
+        const mRect = main.getBoundingClientRect();
+        if (header) {
+          const hRect = header.getBoundingClientRect();
+          const top = Math.min(hRect.top, mRect.top);
+          const bottom = Math.max(mRect.bottom, hRect.bottom, mRect.bottom);
+          setMaxStyle({
+            position: "fixed",
+            left: `${mRect.left}px`,
+            top: `${top}px`,
+            width: `${mRect.width}px`,
+            height: `${bottom - top - 70}px`,
+            zIndex: 9999,
+            borderRadius: "16px",
+            display: "flex",
+            flexDirection: "column",
+            overflow: "hidden",
+            boxSizing: "border-box",
+            minHeight: 0,
+          });
+        } else {
+          setMaxStyle({
+            position: "fixed",
+            left: `${mRect.left}px`,
+            top: `${mRect.top}px`,
+            width: `${mRect.width}px`,
+            height: `${mRect.height}px`,
+            zIndex: 9999,
+            borderRadius: "16px",
+            display: "flex",
+            flexDirection: "column",
+            overflow: "hidden",
+            boxSizing: "border-box",
+            minHeight: 0,
+          });
+        }
+      } else {
+        setMaxStyle({
+          position: "fixed",
+          inset: "0",
+          zIndex: 9999,
+          display: "flex",
+          flexDirection: "column",
+          overflow: "hidden",
+          boxSizing: "border-box",
+        });
+      }
+    };
+
+    window.addEventListener("resize", recompute);
+    // also recompute in case layout changed
+    recompute();
+
+    return () => window.removeEventListener("resize", recompute);
+  }, [isMaximized]);
   const [loadingMessage, setLoadingMessage] = useState("Thinking...");
   const [error, setError] = useState<string | null>(null);
   const [showQuickStart, setShowQuickStart] = useState(true);
@@ -371,11 +448,51 @@ const AIAssistant: React.FC<AIAssistantProps> = ({
 
         const chartImages = await captureChartImages(reportMessages);
         const reportHtml = buildWordReportHtml(currentPrompt, reportMessages, chartImages);
-        const stamp = new Date().toISOString().slice(0, 10);
-        setLatestReportDoc({
-          fileName: `genie-report-${stamp}.doc`,
-          html: reportHtml,
-        });
+        // Common unnecessary words to ignore
+const stopWords = [
+  "give",
+  "show",
+  "me",
+  "for",
+  "in",
+  "the",
+  "a",
+  "an",
+  "of",
+  "to",
+  "on",
+  "at",
+  "by",
+  "with",
+  "from",
+  "please",
+  "report",
+  "generate",
+  "get",
+  "about",
+];
+
+// Convert user prompt into clean filename
+const formattedPrompt = currentPrompt
+  .toLowerCase()
+  .trim()
+  .replace(/[^a-z0-9\s]/g, "") // remove symbols
+  .split(/\s+/) // split into words
+  .filter((word) => !stopWords.includes(word)) // remove unwanted words
+  .join("-") // join using hyphen
+  .replace(/-+/g, "-") // avoid duplicate hyphens
+  .slice(0, 50); // optional length limit
+
+// fallback filename
+const finalFileName =
+  formattedPrompt.length > 0
+    ? `${formattedPrompt}-report.doc`
+    : "genie-report.doc";
+
+setLatestReportDoc({
+  fileName: finalFileName,
+  html: reportHtml,
+});
       } else {
         const response: GenieResponse = await askGenie(currentPrompt);
         setMessages((prev) => [
@@ -397,11 +514,21 @@ const AIAssistant: React.FC<AIAssistantProps> = ({
   };
 
   const baseClasses = isFloating
-    ? `fixed bottom-6 right-6 bg-white rounded-2xl shadow-xl border border-gray-200 z-50 transition-all duration-300 w-[360px] h-[500px]`
+    ? `fixed bg-white rounded-2xl shadow-xl border border-gray-200 z-50 transition-all duration-300 ${
+        isMaximized ? "" : "bottom-6 right-6 w-[360px] h-[540px]"
+      }`
     : "bg-white rounded-2xl h-[460px] shadow flex flex-col ";
 
   return (
-    <div className={`${baseClasses} ${className} flex flex-col`}>
+    <div
+    className={`${baseClasses} ${className} flex flex-col`}
+    style={{
+  ...maxStyle,
+  height: isMaximized ? maxStyle?.height :  undefined,
+  minHeight: 0,
+  overflow: "hidden",
+}}
+  >
       {/* Header */}
       <div className="bg-gradient-to-r from-[#057ceb] to-[#43C6F9] p-3 rounded-t-2xl mb-2">
         <div className="flex items-center justify-between">
@@ -424,6 +551,73 @@ const AIAssistant: React.FC<AIAssistantProps> = ({
           {/* Header Controls */}
           {isFloating && (
             <div className="flex items-center gap-2">
+              {/* Maximize / Minimize Button */}
+              <button
+                onClick={() => {
+                  if (!isMaximized) {
+                    // compute header + main content rect so assistant fills content area including header
+                    const main = document.querySelector("main");
+                    const header = document.querySelector("header");
+                    if (main) {
+                      const mRect = main.getBoundingClientRect();
+                      if (header) {
+                        const hRect = header.getBoundingClientRect();
+                        const top = Math.min(hRect.top, mRect.top);
+                        const bottom = Math.max(mRect.bottom, hRect.bottom, mRect.bottom);
+                        setMaxStyle({
+                          position: "fixed",
+                          left: `${mRect.left}px`,
+                          top: `${top}px`,
+                          width: `${mRect.width}px`,
+                          height: `${bottom - top - 70}px`,
+                          zIndex: 9999,
+                          borderRadius: "8px",
+                          display: "flex",
+                          flexDirection: "column",
+                          overflow: "hidden",
+                          boxSizing: "border-box",
+                          minHeight: 0,
+                        });
+                      } else {
+                        setMaxStyle({
+                          position: "fixed",
+                          left: `${mRect.left}px`,
+                          top: `${mRect.top}px`,
+                          width: `${mRect.width}px`,
+                          height: `${mRect.height}px`,
+                          zIndex: 9999,
+                          borderRadius: "8px",
+                          display: "flex",
+                          flexDirection: "column",
+                          overflow: "hidden",
+                          boxSizing: "border-box",
+                          minHeight: 0,
+                        });
+                      }
+                    } else {
+                      // fallback to full viewport
+                      setMaxStyle({
+                        position: "fixed",
+                        inset: "0",
+                        zIndex: 9999,
+                        display: "flex",
+                        flexDirection: "column",
+                        overflow: "hidden",
+                        boxSizing: "border-box",
+                      });
+                    }
+                    setIsMaximized(true);
+                  } else {
+                    setIsMaximized(false);
+                    setMaxStyle(undefined);
+                  }
+                }}
+                className="text-white transition-colors"
+                title={isMaximized ? "Minimize" : "Maximize"}
+              >
+                {isMaximized ? <Minimize2 className="w-4 h-4" /> : <Square className="w-4 h-4" />}
+              </button>
+
               {onClose && (
                 <button
                   onClick={onClose}
@@ -468,186 +662,202 @@ const AIAssistant: React.FC<AIAssistantProps> = ({
       {/* Content - Only show when not minimized */}
 
       <>
-        {/* Chatbot Tab */}
-        {activeTab === "chatbot" && (
-          <div className="flex-1 flex flex-col p-4 pt-0 overflow-hidden">
-            {/* Messages Display Area */}
-            <div className="flex-1 overflow-y-auto space-y-3 pr-2 text-sm">
-              {messages.length === 0 && (
-                <p className="text-xs text-gray-600 mb-2 px-4 py-2 bg-[#E8F7FB] border border-[#BFE8F6] rounded-lg">
-                  {reportMode
-                    ? "Report Mode is on. Ask for a full report and multiple sections will be generated automatically."
-                    : "Ask intelligent questions about waste management data"}
-                </p>
-              )}
-              {messages.map((msg, index) => (
-                <div
-                  key={index}
-                  className={`p-2 rounded-lg max-w-[85%] whitespace-pre-wrap break-words ${
-                    msg.sender === "user"
-                      ? "bg-blue-500 text-white self-end ml-auto"
-                      : "bg-gray-200 text-gray-800 self-start"
-                  }`}
-                >
-                  {msg.type === "table" && msg.table ? (
-                    <div className="space-y-2">
-                      {msg.title && <p className="font-semibold text-xs">{msg.title}</p>}
-                      {msg.text && <p>{msg.text}</p>}
-                      {(() => {
-                        const chartRows = toChartRows(msg.table);
-                        if (!chartRows) {
-                          return (
-                            <p className="text-xs text-slate-600">
-                              Chart data is not available for this response.
-                            </p>
-                          );
-                        }
+      {/* Chatbot Tab */}
+{activeTab === "chatbot" && (
+  <div
+    className="flex flex-1 flex-col p-4 pt-0 min-h-0 overflow-hidden"
+    style={isMaximized ? { minHeight: 0 } : undefined}
+  >
+    {/* Messages Display Area */}
+    <div
+  className={`overflow-y-auto space-y-3 pr-2 text-sm min-h-0 pb-2 ${
+    messages.length === 0 ? "flex-none" : "flex-1"
+  }`}
+>
+      {messages.length === 0 && (
+        <p className="text-xs text-gray-600 mb-2 px-4 py-2 bg-[#E8F7FB] border border-[#BFE8F6] rounded-lg">
+          {reportMode
+            ? "Report Mode is on. Ask for a full report and multiple sections will be generated automatically."
+            : "Ask intelligent questions about waste management data"}
+        </p>
+      )}
+      {messages.map((msg, index) => (
+        <div
+          key={index}
+          className={`p-2 rounded-lg max-w-[85%] whitespace-pre-wrap break-words ${
+            msg.sender === "user"
+              ? "bg-blue-500 text-white self-end ml-auto"
+              : "bg-gray-200 text-gray-800 self-start"
+          }`}
+        >
+          {msg.type === "table" && msg.table ? (
+            <div className="space-y-2">
+              {msg.title && <p className="font-semibold text-xs">{msg.title}</p>}
+              {msg.text && <p>{msg.text}</p>}
+              {(() => {
+                const chartRows = toChartRows(msg.table);
+                if (!chartRows) {
+                  return (
+                    <p className="text-xs text-slate-600">
+                      Chart data is not available for this response.
+                    </p>
+                  );
+                }
 
-                        return (
-                          <div
-                            ref={(node) => {
-                              if (msg.id) {
-                                chartContainerRefs.current[msg.id] = node;
-                              }
-                            }}
-                            className="h-48 w-full rounded-md border border-gray-300 bg-white p-2"
-                          >
-                            <ResponsiveContainer width="100%" height="100%">
-                              <BarChart data={chartRows}>
-                                <CartesianGrid strokeDasharray="3 3" />
-                                <XAxis dataKey="label" tick={{ fontSize: 10 }} />
-                                <YAxis tick={{ fontSize: 10 }} />
-                                <Tooltip />
-                                <Bar
-                                  dataKey="value"
-                                  fill="#2185e3"
-                                  radius={[4, 4, 0, 0]}
-                                  isAnimationActive={false}
-                                />
-                              </BarChart>
-                            </ResponsiveContainer>
-                          </div>
-                        );
-                      })()}
-                    </div>
-                  ) : (
-                    <div>
-                      {msg.title && <p className="font-semibold text-xs mb-1">{msg.title}</p>}
-                      <p>{msg.text}</p>
-                    </div>
-                  )}
-                </div>
-              ))}
-              {isLoading && (
-                <div className="bg-gray-200 text-gray-800 self-start p-2 rounded-lg">
-                  {loadingMessage}
-                </div>
-              )}
-              {error && (
-                <div className="text-red-500 text-xs p-2 bg-red-50 rounded-lg">
-                  {error}
-                </div>
-              )}
-              {!isLoading && reportMode && latestReportDoc && (
-                <div className="self-start rounded-lg border border-[#BFE8F6] bg-[#E8F7FB] p-2">
-                  <p className="text-xs text-[#0F1F3D] mb-2">
-                    All report responses are combined. Download the final Word document.
-                  </p>
-                  <button
-                    type="button"
-                    onClick={handleDownloadReport}
-                    className="rounded-md bg-gradient-to-r from-[#057ceb] to-[#43C6F9] px-3 py-1.5 text-xs font-medium text-white hover:from-[#0459c7] hover:to-[#2bb8eb]"
+                return (
+                  <div
+                    ref={(node) => {
+                      if (msg.id) {
+                        chartContainerRefs.current[msg.id] = node;
+                      }
+                    }}
+                    className="h-48 w-full rounded-md border border-gray-300 bg-white p-2"
                   >
-                    Download Word Report
-                  </button>
-                </div>
-              )}
-            </div>
-
-            {/* Quick Start Questions */}
-            {showQuickStart && (
-              <div className="mt-auto pt-2">
-                <p className="font-semibold mb-2 text-sm">
-                  Quick Start Questions:
-                </p>
-                <ul className="space-y-2 text-sm mb-3">
-                  {[
-                    "Which location has the highest total damage?",
-                    "What is the total sum of all damages recorded?",
-                    "Show me top 5 damage locations",
-                  ].map((q, i) => (
-                    <li
-                      key={i}
-                      className="bg-gray-100 p-2 rounded-lg hover:bg-gray-200 cursor-pointer"
-                      onClick={() => handleSendMessage(q)}
-                    >
-                      {q}
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            )}
-
-            {/* Input Field */}
-            <div className="mt-auto pt-2">
-              <div className="mb-2 rounded-lg border border-[#BFE8F6] bg-[#E8F7FB] px-3 py-2">
-                <div className="flex items-center justify-between gap-3">
-                  <div>
-                    <p className="text-xs font-semibold text-[#0F1F3D]">
-                      {reportMode ? "Report Mode" : "Quick Chat Mode"}
-                    </p>
-                    <p className="text-[11px] text-slate-600">
-                      {reportMode
-                        ? "Runs multiple prompts and builds chartable report sections"
-                        : "Single prompt response with summary and table"}
-                    </p>
+                    <ResponsiveContainer width="100%" height="100%">
+                      <BarChart data={chartRows}>
+                        <CartesianGrid strokeDasharray="3 3" />
+                        <XAxis dataKey="label" tick={{ fontSize: 10 }} />
+                        <YAxis tick={{ fontSize: 10 }} />
+                        <Tooltip />
+                        <Bar
+                          dataKey="value"
+                          fill="#2185e3"
+                          radius={[4, 4, 0, 0]}
+                          isAnimationActive={false}
+                        />
+                      </BarChart>
+                    </ResponsiveContainer>
                   </div>
-                  <label className="relative inline-flex cursor-pointer items-center">
-                    <input
-                      type="checkbox"
-                      className="peer sr-only"
-                      checked={reportMode}
-                      onChange={(e) => setReportMode(e.target.checked)}
-                    />
-                    <div className="h-6 w-11 rounded-full bg-gray-300 transition-colors peer-checked:bg-[#2185e3] after:absolute after:left-[2px] after:top-[2px] after:h-5 after:w-5 after:rounded-full after:bg-white after:transition-transform after:content-[''] peer-checked:after:translate-x-5" />
-                  </label>
-                </div>
-              </div>
-              <div className="flex">
-                <input
-                  type="text"
-                  placeholder={
-                    reportMode
-                      ? "Example: give report for damages in previous quarter"
-                      : "Ask me anything..."
-                  }
-                  className="flex-1 border rounded-l-lg px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
-                  value={prompt}
-                  onChange={(e) => setPrompt(e.target.value)}
-                  onKeyDown={(e) =>
-                    e.key === "Enter" && handleSendMessage(prompt)
-                  }
-                  disabled={isLoading}
-                />
-                <button
-                  className={`text-white px-4 rounded-r-lg transition-all duration-200 ${
-                    isLoading || !prompt.trim()
-                      ? "bg-blue-300 cursor-not-allowed"
-                      : "bg-gradient-to-r from-[#057ceb] to-[#43C6F9] hover:from-[#0459c7] hover:to-[#2bb8eb]"
-                  }`}
-                  onClick={() => handleSendMessage(prompt)}
-                  disabled={isLoading || !prompt.trim()}
-                >
-                  <Send className="w-4 h-4" />
-                </button>
-              </div>
+                );
+              })()}
             </div>
+          ) : (
+            <div>
+              {msg.title && <p className="font-semibold text-xs mb-1">{msg.title}</p>}
+              <p>{msg.text}</p>
+            </div>
+          )}
+        </div>
+      ))}
+      {isLoading && (
+        <div className="bg-gray-200 text-gray-800 self-start p-2 rounded-lg">
+          {loadingMessage}
+        </div>
+      )}
+      {error && (
+        <div className="text-red-500 text-xs p-2 bg-red-50 rounded-lg">
+          {error}
+        </div>
+      )}
+      {!isLoading && reportMode && latestReportDoc && (
+        <div className="self-start rounded-lg border border-[#BFE8F6] bg-[#E8F7FB] p-2">
+          <p className="text-xs text-[#0F1F3D] mb-2">
+            All report responses are combined. Download the final Word document.
+          </p>
+          <button
+            type="button"
+            onClick={handleDownloadReport}
+            className="rounded-md bg-gradient-to-r from-[#057ceb] to-[#43C6F9] px-3 py-1.5 text-xs font-medium text-white hover:from-[#0459c7] hover:to-[#2bb8eb]"
+          >
+            Download Word Report
+          </button>
+        </div>
+      )}
+    </div>
+
+    {/* Quick Start Questions - OUTSIDE scrollable area */}
+    {showQuickStart && (
+  <div
+    className={`pt-2 shrink-0 border-t border-gray-200 bg-white ${
+      isMaximized ? "pb-[175px]" : ""
+    }`}
+    style={{
+      maxHeight: reportMode ? "198px" : "198px",
+    }}
+  >
+        <p className="font-semibold mb-2 text-sm">Quick Start Questions:</p>
+        <ul className="space-y-2 text-sm mb-3">
+  {(reportMode
+    ? reportQuickQuestions
+    : normalQuickQuestions
+  ).map((q, i) => (
+    <li
+      key={i}
+      className="bg-gray-100 p-2 rounded-lg hover:bg-gray-200 cursor-pointer"
+      onClick={() => handleSendMessage(q)}
+    >
+      {q}
+    </li>
+  ))}
+</ul>
+      </div>
+    )}
+
+    {/* Input Field - Fixed at bottom, not scrollable */}
+    {/* Input Field - Fixed at bottom, not scrollable */}
+<div
+  className={`shrink-0 border-t border-gray-200 bg-white z-10 ${
+    isMaximized ? "mt-32 pt-2" : "pt-2"
+  }`}
+>
+      <div className="mb-2 rounded-lg border border-[#BFE8F6] bg-[#E8F7FB] px-3 py-2">
+        <div className="flex items-center justify-between gap-3">
+          <div>
+            <p className="text-xs font-semibold text-[#0F1F3D]">
+              {reportMode ? "Report Mode" : "Switch to Report Mode"}
+            </p>
+            <p className="text-[11px] text-slate-600">
+              {reportMode
+                ? "Runs multiple prompts and builds chartable report sections"
+                : "Runs multiple prompts and builds chartable report sections"}
+            </p>
           </div>
-        )}
+          <label className="relative inline-flex cursor-pointer items-center">
+            <input
+              type="checkbox"
+              className="peer sr-only"
+              checked={reportMode}
+              onChange={(e) => setReportMode(e.target.checked)}
+            />
+            <div className="h-6 w-11 rounded-full bg-gray-300 transition-colors peer-checked:bg-[#2185e3] after:absolute after:left-[2px] after:top-[2px] after:h-5 after:w-5 after:rounded-full after:bg-white after:transition-transform after:content-[''] peer-checked:after:translate-x-5" />
+          </label>
+        </div>
+      </div>
+      <div className="flex">
+        <input
+          type="text"
+          placeholder={
+            reportMode
+              ? "Example: give report for damages in previous quarter"
+              : "Ask me anything..."
+          }
+          className="flex-1 border rounded-l-lg px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
+          value={prompt}
+          onChange={(e) => setPrompt(e.target.value)}
+          onKeyDown={(e) =>
+            e.key === "Enter" && handleSendMessage(prompt)
+          }
+          disabled={isLoading}
+        />
+        <button
+          className={`text-white px-4 rounded-r-lg transition-all duration-200 ${
+            isLoading || !prompt.trim()
+              ? "bg-blue-300 cursor-not-allowed"
+              : "bg-gradient-to-r from-[#057ceb] to-[#43C6F9] hover:from-[#0459c7] hover:to-[#2bb8eb]"
+          }`}
+          onClick={() => handleSendMessage(prompt)}
+          disabled={isLoading || !prompt.trim()}
+        >
+          <Send className="w-4 h-4" />
+        </button>
+      </div>
+    </div>
+  </div>
+)}
 
         {/* FAQ Tab */}
         {activeTab === "faq" && (
-          <div className="space-y-2 p-4 overflow-y-auto">
+          <div className="flex-1 overflow-y-auto space-y-2 p-4 min-h-0">
             {faqs.map((faq, i) => (
               <div
                 key={i}
