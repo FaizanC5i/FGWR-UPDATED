@@ -74,22 +74,22 @@ const reportSections = [
   {
     title: "Executive Summary",
     buildPrompt: (basePrompt: string) =>
-      `Create an executive summary for: ${basePrompt}. Keep it concise (80-100 words). Include key metrics, business impact, top risks, and immediate actions.`,
+      `For this request: ${basePrompt}, write a very concise executive summary in 35-45 words. Include only the most important metric, key risk, and immediate action. Keep the final full report around 100 words total.`,
   },
   {
     title: "Damage Trend and Locations",
     buildPrompt: (basePrompt: string) =>
-      `For this request: ${basePrompt}, provide top damage locations and trend analysis in 70-90 words. Include at least one structured table suitable for charting.`,
+      `For this request: ${basePrompt}, provide top damage location and short trend insight in 20-30 words. Include one compact structured table suitable for charting. Keep wording minimal.`,
   },
   {
     title: "Stales and Waste Drivers",
     buildPrompt: (basePrompt: string) =>
-      `For this request: ${basePrompt}, analyze stales and waste drivers by site/product in 70-90 words. Include at least one structured table suitable for charting.`,
+      `For this request: ${basePrompt}, provide key stales/waste driver insight in 20-25 words. Include one compact structured table suitable for charting.`,
   },
   {
     title: "Action Plan",
     buildPrompt: (basePrompt: string) =>
-      `For this request: ${basePrompt}, provide a prioritized 30-60-90 day action plan in 60-80 words with measurable KPIs. Keep the entire report around 300 words total.`,
+      `For this request: ${basePrompt}, provide a very short action plan in 15-20 words with one measurable KPI. Keep the entire report about 100 words on one page.`,
   },
 ];
 
