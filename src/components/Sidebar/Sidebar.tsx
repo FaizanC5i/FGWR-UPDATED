@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Home, TrendingUp, Clock, Package, Bell, FileText } from 'lucide-react';
+import { Home, TrendingUp, Clock, Package, Bell } from 'lucide-react';
 import logo from '../../assets/Layer.png';
 import { NavLink, Outlet, useLocation } from "react-router-dom";
 import FloatingAlerts from '../Alert/Alert';
@@ -33,7 +33,6 @@ const Layout: React.FC = () => {
   { id: "analytics", label: "Executive Summary", icon: TrendingUp, path: "/analytics" },
   { id: "stales", label: "Stales", icon: Clock, path: "/stales" },
   { id: "damages", label: "Damages", icon: Package, path: "/damages" },
-    { id: "reports", label: "AI Reports", icon: FileText, path: "/reports" },
 ];
   let heading = "Waste Management Overview";
 let subheading = "Track, analyze, and reduce waste across plants and regions.";
@@ -47,9 +46,6 @@ if (currentPath === "/home") {
 } else if (currentPath === "/damages") {
   heading = "Damages Overview";
   subheading = "Monitor, assess, and reduce damaged goods.";
-} else if (currentPath === "/reports") {
-  heading = "AI Report Builder";
-  subheading = "Generate detailed AI reports with charts and export-ready outputs.";
 }
 
   return (
