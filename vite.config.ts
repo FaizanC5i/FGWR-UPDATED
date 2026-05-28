@@ -7,5 +7,12 @@ export default defineConfig({
   server: {
     host: '0.0.0.0',  // This allows external access to the app from outside the container
     port: 8080,
+    proxy: {
+      '/api/genie-query': {
+        target: 'https://genie-g6atf2bzegdeh4gj.canadacentral-01.azurewebsites.net',
+        changeOrigin: true,
+        secure: true,
+      },
+    },
   },
 })
