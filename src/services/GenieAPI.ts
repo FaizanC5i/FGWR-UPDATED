@@ -40,8 +40,7 @@ export type GenieResponse =
   | { type: "text"; text: string }
   | { type: "table"; text?: string; table: GenieTableData };
 
-const BASE_URL =
-  import.meta.env.VITE_GENIE_API_URL?.trim() || "/api/genie-query";
+const BASE_URL ="https://genie-g6atf2bzegdeh4gj.canadacentral-01.azurewebsites.net/api/genie-query"
 
 const normalizePlainText = (input?: string | null): string => {
   if (!input) return "";
