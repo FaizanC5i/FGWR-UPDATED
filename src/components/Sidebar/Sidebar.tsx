@@ -1,9 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { Home, TrendingUp, Clock, Package, Bell } from 'lucide-react';
+import { Home, TrendingUp, Clock, Package, Bell, Sparkles } from 'lucide-react';
 import logo from '../../assets/Layer.png';
 import { NavLink, Outlet, useLocation } from "react-router-dom";
 import FloatingAlerts from '../Alert/Alert';
-
 
 interface NavigationItem {
   id: string;
@@ -19,34 +18,42 @@ const Layout: React.FC = () => {
   const location = useLocation();
   const currentPath = location.pathname.toLowerCase();
 
-
   useEffect(() => {
     const path = window.location.pathname.toLowerCase();
     const isHome = path === "/" || path === "/home" || path === "/home/";
     setIsVisible(!isHome);
     setActiveLink(path);
   }, []);
+
   const [isAlertsOpen, setIsAlertsOpen] = useState(false);
 
   const navigationItems: NavigationItem[] = [
-  { id: "home", label: "Home", icon: Home, path: "/Home" },
-  { id: "analytics", label: "Executive Summary", icon: TrendingUp, path: "/analytics" },
-  { id: "stales", label: "Stales", icon: Clock, path: "/stales" },
-  { id: "damages", label: "Damages", icon: Package, path: "/damages" },
-];
-  let heading = "Waste Management Overview";
-let subheading = "Track, analyze, and reduce waste across plants and regions.";
+    { id: "home", label: "Home", icon: Home, path: "/Home" },
+    { id: "analytics", label: "Executive Summary", icon: TrendingUp, path: "/analytics" },
+    { id: "stales", label: "Stales", icon: Clock, path: "/stales" },
+    { id: "damages", label: "Damages", icon: Package, path: "/damages" },
+    { id: "ask-ai", label: "Ask AI", icon: Sparkles, path: "/ask-ai" },
+  ];
 
-if (currentPath === "/home") {
-  heading = "Home";
-  subheading = "AI-powered insights and anomaly detection at a glance.";
-} else if (currentPath === "/stales") {
-  heading = "Stales Overview";
-  subheading = "Track and analyze stale inventory and performance.";
-} else if (currentPath === "/damages") {
-  heading = "Damages Overview";
-  subheading = "Monitor, assess, and reduce damaged goods.";
-}
+  let heading = "Waste Management Overview";
+  let subheading = "Track, analyze, and reduce waste across plants and regions.";
+
+  if (currentPath === "/home") {
+    heading = "Home";
+    subheading = "AI-powered insights and anomaly detection at a glance.";
+  } else if (currentPath === "/stales") {
+    heading = "Stales Overview";
+    subheading = "Track and analyze stale inventory and performance.";
+  } else if (currentPath === "/damages") {
+    heading = "Damages Overview";
+    subheading = "Monitor, assess, and reduce damaged goods.";
+  } else if (currentPath === "/analytics") {
+    heading = "Executive Summary";
+    subheading = "Review AI-generated insights, trends, and key business drivers.";
+  } else if (currentPath === "/ask-ai") {
+    heading = "Ask AI";
+    subheading = "Ask natural-language questions and explore guided business insights.";
+  }
 
   return (
     <div className="flex h-screen bg-gray-50">
@@ -61,6 +68,7 @@ if (currentPath === "/home") {
           />
           <div className="w-full border-b border-slate-700 mt-8"></div>
         </div>
+
         {/* Navigation Menu */}
         <nav className="flex-1 py-6 mt-2">
           <ul className="space-y-2 px-4">
@@ -93,35 +101,31 @@ if (currentPath === "/home") {
       {/* Main Content */}
       <div className="flex-1 flex flex-col">
         {/* Header */}
-        <header className="flex justify-between items-center border-b bg-white px-6 py-2 pl shadow-sm">
+        <header className="flex justify-between items-center border-b bg-white px-6 py-2 shadow-sm">
           <div>
             <h1 className="text-base font-bold text-gray-900">{heading}</h1>
             <p className="text-gray-600 text-[13px]">{subheading}</p>
-
           </div>
 
           <div className="flex items-center space-x-8">
             <p className="text-[13px] text-gray-500">
-              Last Update on:{""}
-              {new Date().toLocaleDateString()}{" "}
+              Last Update on: {new Date().toLocaleDateString()}
             </p>
 
-
-          {location.pathname == "/analytics" && (
-            <button
-        onClick={() => setIsAlertsOpen(true)}
-        className="border-4 border-white bg-blue-600 hover:bg-blue-700 text-white rounded-full px-2 py-2 shadow-lg z-40 transition-colors duration-200 group"
-        aria-label="Open Alerts Panel"
-      >
-        <div className="relative">
-          <Bell className="h-3 w-3" />
-           <span className="absolute -top-3 -right-3 bg-red-600 text-white text-[10px] font-normal rounded-full h-3 w-3 flex items-center justify-center">
-            6
-          </span> 
-        </div>
-      </button>
-          )}
-
+            {location.pathname === "/analytics" && (
+              <button
+                onClick={() => setIsAlertsOpen(true)}
+                className="border-4 border-white bg-blue-600 hover:bg-blue-700 text-white rounded-full px-2 py-2 shadow-lg z-40 transition-colors duration-200 group"
+                aria-label="Open Alerts Panel"
+              >
+                <div className="relative">
+                  <Bell className="h-3 w-3" />
+                  <span className="absolute -top-3 -right-3 bg-red-600 text-white text-[10px] font-normal rounded-full h-3 w-3 flex items-center justify-center">
+                    6
+                  </span>
+                </div>
+              </button>
+            )}
 
             <div className="flex items-center space-x-3">
               <div className="text-right">
@@ -134,14 +138,15 @@ if (currentPath === "/home") {
             </div>
           </div>
         </header>
+
         <FloatingAlerts
-        isOpen={isAlertsOpen}
-        onClose={() => setIsAlertsOpen(false)}
-      />
+          isOpen={isAlertsOpen}
+          onClose={() => setIsAlertsOpen(false)}
+        />
 
         {/* Content Placeholder */}
         <main className="flex-1 p-1">
-          <div className="text-gray-600">
+          <div className="text-gray-600 h-full">
             <Outlet />
           </div>
         </main>
@@ -151,4 +156,3 @@ if (currentPath === "/home") {
 };
 
 export default Layout;
-

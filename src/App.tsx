@@ -1,7 +1,7 @@
-import './App.css'
-import {  Suspense } from "react";
+import './App.css';
+import { Suspense } from "react";
 import { Spin } from "antd";
-import { Route, Routes} from "react-router-dom"; 
+import { Route, Routes } from "react-router-dom";
 import HomePage from './components/Home/Home';
 import LoginPage from './components/Login/Login';
 import DashboardPage from './components/Overview/Overview';
@@ -9,10 +9,10 @@ import Sidebar from './components/Sidebar/Sidebar';
 import Analytics from './components/Analytics/Analytics';
 import Stales from './components/stales/stales';
 import Damages from './components/Damages/Damages';
+import AskAI from './components/AskAI/AskAI';
 
 function App() {
-
-  return(
+  return (
     <Suspense
       fallback={
         <div
@@ -30,11 +30,12 @@ function App() {
       <Routes>
         <Route path="/" element={<LoginPage />} />
         <Route element={<Sidebar />}>
-          <Route path='/Home' element={<HomePage />} />
-          <Route path='/overview' element={<DashboardPage />} />
-          <Route path='/analytics' element={<Analytics />} />
-          <Route path='/stales' element={<Stales />} />
-          <Route path='/damages' element={<Damages />} />
+          <Route path="/Home" element={<HomePage />} />
+          <Route path="/overview" element={<DashboardPage />} />
+          <Route path="/analytics" element={<Analytics />} />
+          <Route path="/stales" element={<Stales />} />
+          <Route path="/damages" element={<Damages />} />
+          <Route path="/ask-ai" element={<AskAI />} />
         </Route>
       </Routes>
     </Suspense>

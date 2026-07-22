@@ -15,6 +15,7 @@ import {
   askGenieRich,
   type GenieResponse,
   type GenieTableData,
+  type RankingPayload,
 } from "../../services/GenieAPI";
 import aichat from "../../assets/aichat.gif";
 
@@ -26,7 +27,8 @@ interface Message {
     columns: string[];
     rows: string[][];
   };
-  type: "text" | "table";
+  ranking?: RankingPayload;
+  type: "text" | "table" | "ranking";
   sender: "user" | "ai";
 }
 
@@ -502,6 +504,7 @@ setLatestReportDoc({
             type: response.type,
             text: response.type === "text" ? response.text : response.text,
             table: response.type === "table" ? response.table : undefined,
+            ranking: response.type === "ranking" ? response.ranking : undefined,
           },
         ]);
       }
